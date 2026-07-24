@@ -4,57 +4,109 @@ from termcolor import colored
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout, Input
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
-import process_df_lstm_args
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.utils.class_weight import compute_class_weight
+import matplotlib.pyplot as plt
+import seaborn as sns
+import process_df
 
 frames_df = pd.read_csv(r"C:\PROJECT_drowsiness\processed_videos\frames_data.csv") # read dataset
 
+# global variables
+save_model_path = r"C:\PROJECT_drowsiness\lstm_model.keras"
+lstm_batch_size = 64
+windowSize = 20
+windowStride = 2
 df_drowsiness_ratio = frames_df["State"].mean() # calculate the percentage of the frames with 'State' 1 in the dataset
 
-# % = percentage formater
-print(f"Dataset drowsiness ratio: " + colored(f"{df_drowsiness_ratio:.4%}", color = "yellow", attrs = ["bold", "italic"]))
+print(f"Dataset drowsiness ratio: " + colored(f"{df_drowsiness_ratio:.2%}", color = "yellow", attrs = ["bold", "italic"]))
 
 # split dataset to train, test and validation 
-train_df, test_df = process_df_lstm_args.split_df(frames_df, test_size_percentage = 0.2, val_or_test = "test")
-final_train_df, val_df = process_df_lstm_args.split_df(train_df, test_size_percentage = 0.1, val_or_test = "val")
+train_df, test_df = process_df.split_df(frames_df, test_size_percentage = 0.2, val_or_test = "test")
+final_train_df, val_df = process_df.split_df(train_df, test_size_percentage = 0.2, val_or_test = "val")
 
 # create windows for training, testing and validation
-train_features, train_labels = process_df_lstm_args.split_df_toWindows(final_train_df, process_df_lstm_args.windowSize, process_df_lstm_args.windowStride)
-test_features, test_labels = process_df_lstm_args.split_df_toWindows(test_df, process_df_lstm_args.windowSize, process_df_lstm_args.windowStride)
-val_features, val_labels = process_df_lstm_args.split_df_toWindows(val_df, process_df_lstm_args.windowSize, process_df_lstm_args.windowStride)
+train_features, train_labels = process_df.split_df_toWindows(final_train_df, windowSize, windowStride)
+test_features, test_labels = process_df.split_df_toWindows(test_df, windowSize, windowStride)
+val_features, val_labels = process_df.split_df_toWindows(val_df, windowSize, windowStride)
 
 print(colored("Creation of the windows finished successfully!", color = "green", attrs = ["bold", "italic", "underline"]))
 print(f"Train features dataset shape: {np.shape(train_features)} | Train labels dataset shape: {np.shape(train_labels)}")
 print(f"Test features dataset shape: {np.shape(test_features)} | Test labels dataset shape: {np.shape(test_labels)}")
 print(f"Validation features dataset shape: {np.shape(val_features)} | Validation labels dataset shape: {np.shape(val_labels)}")
-print(f"{"="*100}")
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 
 # lstm architecture
 lstm_model = Sequential()
-lstm_model.add(Input(shape = (process_df_lstm_args.windowSize, 2)))
-lstm_model.add(LSTM(units = 64, return_sequences = True)) # returns output for each of the 20 frames for every window in the batch 
-lstm_model.add(Dropout(rate = 0.2)) # to avoid overfitting and for better generalization
+lstm_model.add(Input(shape = (windowSize, 2)))
+lstm_model.add(LSTM(units = 64, return_sequences = True)) # returns a vector for each of the 20 frames for every window in the batch 
+lstm_model.add(Dropout(rate = 0.1)) # to avoid overfitting and for better generalization
 lstm_model.add(LSTM(units = 32)) # returns output (32, ) for every window
-lstm_model.add(Dropout(rate = 0.2))
-lstm_model.add(Dense(units = 16, activation = "relu"))
+lstm_model.add(Dropout(rate = 0.1))
+lstm_model.add(Dense(units = 16, activation = "leaky_relu"))
 lstm_model.add(Dense(units = 1, activation = "sigmoid")) # final prediction, possibility of drowsiness
 
-# lstm compiling and training and evaluation...
+# because we have an imbalanced dataset, we assign weights to the 2 different classes
+# so that the minority class has a bigger weight than the majority class
+# this forces the model to pay more attention to the minority class during training
+# basically we modify the loss function to multiply the loss of each sample by a the classes weight
+
+unique_classes = np.unique(train_labels) # shape: (2, )
+
+# calculate the weights for each class automatically based on their frequency in the train data
+weights = compute_class_weight(class_weight = "balanced", classes = unique_classes, y = train_labels)
+
+weights_dict = dict(zip(unique_classes, weights))
+
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+print(colored("Class Calculated Weights:", on_color = "on_green", attrs = ["bold", "italic"]))
+print(weights_dict)
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+
+# lstm compiling, training, evaluation and predictions...
 
 lstm_model.compile(optimizer = "adam", loss = "binary_crossentropy", metrics = ["binary_accuracy", "precision", "recall"])
 lstm_model.summary()
 
-training_stoper = EarlyStopping(monitor = "val_loss", patience = 8, restore_best_weights = True)
-opt_learning_rate_reducer = ReduceLROnPlateau(monitor = "val_loss", factor = 0.25, patience = 4, min_lr = 0.00001)
+training_stoper = EarlyStopping(monitor = "val_loss", patience = 10, restore_best_weights = True)
+opt_learning_rate_reducer = ReduceLROnPlateau(monitor = "val_loss", factor = 0.25, patience = 5, min_lr = 0.00001)
+
 # callback to save the model after each epoch of the training process only if it's better than the previous version of it
-lstm_checkpoint = ModelCheckpoint(filepath = process_df_lstm_args.save_model_path, monitor = "val_loss", verbose = 1, save_best_only = True)
+lstm_checkpoint = ModelCheckpoint(filepath = save_model_path, monitor = "val_loss", verbose = 1, save_best_only = True)
 
-print(colored("Model's training in progress...", on_color = "on_yellow", attrs = ["bold", "italic"]))
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+print(colored("Model's training in progress...", on_color = "on_green", attrs = ["bold", "italic"]))
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 
-lstm_history = lstm_model.fit(x = train_features, y = train_labels, batch_size = process_df_lstm_args.lstm_batch_size, epochs = 100, verbose = 2, \
-                             callbacks = [training_stoper, opt_learning_rate_reducer, lstm_checkpoint], validation_data = (val_features, val_labels))
+lstm_history = lstm_model.fit(x = train_features, y = train_labels, batch_size = lstm_batch_size, epochs = 100, verbose = 2, \
+                             callbacks = [training_stoper, opt_learning_rate_reducer, lstm_checkpoint], \
+                             validation_data = (val_features, val_labels), class_weight = weights_dict)
 
-lstm_loss, lstm_accuracy, lstm_precision, lstm_recall = lstm_model.evaluate(x = test_features, y = test_labels, batch_size = process_df_lstm_args.lstm_batch_size)
+predictions_2D = lstm_model.predict(test_features, batch_size = lstm_batch_size) # predictions shape: (number of test windows, 1)
 
-print(f"{"="*100}")
-print(colored("Model's metrics during testing: ", on_color = "on_yellow", attrs = ["bold", "italic"]))
-print(f"Loss: {lstm_loss:.4f} | Acc: {lstm_accuracy:.2%} | Precision: {lstm_precision:.2%} | Recall: {lstm_recall:.2%}")
+predictions_1D = predictions_2D.flatten() # shape: (number of test windows, )
+predictions_1D = (predictions_1D >= 0.45).astype(int) # turn the probabilities to labels, threshold set to 0.4 
+
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+print(colored("Classification Report: ", on_color = "on_green", attrs = ["bold", "italic"]) + "\n")
+print(classification_report(y_true = test_labels, y_pred = predictions_1D, target_names = ["Awake(0)", "Drowsy(1)"]))
+
+conf_matrix = confusion_matrix(y_true = test_labels, y_pred = predictions_1D) # shape: (2,2)
+
+conf_group_names = ["True Neg", "False Pos", "False Neg", "True Pos"]
+conf_group_counts = conf_matrix.flatten().astype(str).tolist()
+conf_group_percentages =  [f"{value:.2%}" for value in conf_matrix.flatten()/conf_matrix.sum()]
+conf_group_labels = [f"{s1}\n{s2}\n{s3}" for s1, s2, s3 in zip(conf_group_names,conf_group_counts,conf_group_percentages)]
+conf_group_labels_2D = np.array(conf_group_labels).reshape(2,2)
+
+# create figure and plot the confusion matrix
+plt.figure(figsize = (8,6), edgecolor = "black", facecolor = "whitesmoke", layout = "tight")
+sns.heatmap(data = conf_matrix, cmap = "YlGnBu", annot = conf_group_labels_2D, fmt = "", cbar = False, square = True, \
+            linecolor = "black", linewidths = 0.5, xticklabels = ["Awake(0)", "Drowsy(1)"], yticklabels = ["Awake(0)", "Drowsy(1)"], \
+            annot_kws = {"size":"medium", "style":"italic", "weight":"bold"})
+plt.xlabel("Predicted Class", labelpad = 10, size = "large", style = "italic", weight = "bold")
+plt.ylabel("Actual Class", labelpad = 10, size = "large", style = "italic", weight = "bold")
+plt.title("Drowsiness Classification Confusion Matrix", loc = "center", pad = 20, \
+         color = "royalblue", size = "x-large", style = "italic", weight = "bold")
+plt.show()
+
