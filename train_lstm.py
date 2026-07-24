@@ -49,7 +49,7 @@ lstm_model.add(Dense(units = 1, activation = "sigmoid")) # final prediction, pos
 # because we have an imbalanced dataset, we assign weights to the 2 different classes
 # so that the minority class has a bigger weight than the majority class
 # this forces the model to pay more attention to the minority class during training
-# basically we modify the loss function to multiply the loss of each sample by a the classes weight
+# basically we modify the loss function to multiply the loss of each sample by the class weight
 
 unique_classes = np.unique(train_labels) # shape: (2, )
 
