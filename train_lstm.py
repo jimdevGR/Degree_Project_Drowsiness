@@ -85,7 +85,7 @@ lstm_history = lstm_model.fit(x = train_features, y = train_labels, batch_size =
 predictions_2D = lstm_model.predict(test_features, batch_size = lstm_batch_size) # predictions shape: (number of test windows, 1)
 
 predictions_1D = predictions_2D.flatten() # shape: (number of test windows, )
-predictions_1D = (predictions_1D >= 0.45).astype(int) # turn the probabilities to labels, threshold set to 0.4 
+predictions_1D = (predictions_1D >= 0.45).astype(int) # turn the probabilities to labels, threshold set to 0.45
 
 print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 print(colored("Classification Report: ", on_color = "on_green", attrs = ["bold", "italic"]) + "\n")
