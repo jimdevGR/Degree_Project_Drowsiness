@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 from termcolor import colored
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, Dropout, Input
+from keras.layers import LSTM, Dense, Dropout, Input, LayerNormalization
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+from keras.metrics import Recall, Precision, BinaryAccuracy
+from keras.losses import BinaryFocalCrossentropy
 from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.utils.class_weight import compute_class_weight
 import matplotlib.pyplot as plt
 import seaborn as sns
 import process_df
@@ -14,12 +15,13 @@ frames_df = pd.read_csv(r"C:\PROJECT_drowsiness\processed_videos\frames_data.csv
 
 # global variables
 save_model_path = r"C:\PROJECT_drowsiness\lstm_model.keras"
-lstm_batch_size = 64
+lstm_batch_size = 128
 windowSize = 20
 windowStride = 2
+pred_threshold = 0.45
 df_drowsiness_ratio = frames_df["State"].mean() # calculate the percentage of the frames with 'State' 1 in the dataset
 
-print(f"Dataset drowsiness ratio: " + colored(f"{df_drowsiness_ratio:.2%}", color = "yellow", attrs = ["bold", "italic"]))
+print("Dataset drowsiness ratio: " + colored(f"{df_drowsiness_ratio:.2%}", color = "yellow", attrs = ["bold", "italic"]))
 
 # split dataset to train, test and validation 
 train_df, test_df = process_df.split_df(frames_df, test_size_percentage = 0.2, val_or_test = "test")
@@ -40,35 +42,29 @@ print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 lstm_model = Sequential()
 lstm_model.add(Input(shape = (windowSize, 2)))
 lstm_model.add(LSTM(units = 64, return_sequences = True)) # returns a vector for each of the 20 frames for every window in the batch 
-lstm_model.add(Dropout(rate = 0.1)) # to avoid overfitting and for better generalization
+lstm_model.add(LayerNormalization()) # normalize the features of each window in the batch independently
+lstm_model.add(Dropout(rate = 0.1)) # "drops" 10% of the features of every window independently
 lstm_model.add(LSTM(units = 32)) # returns output (32, ) for every window
+lstm_model.add(LayerNormalization())
 lstm_model.add(Dropout(rate = 0.1))
 lstm_model.add(Dense(units = 16, activation = "leaky_relu"))
 lstm_model.add(Dense(units = 1, activation = "sigmoid")) # final prediction, possibility of drowsiness
 
-# because we have an imbalanced dataset, we assign weights to the 2 different classes
-# so that the minority class has a bigger weight than the majority class
-# this forces the model to pay more attention to the minority class during training
-# basically we modify the loss function to multiply the loss of each sample by the class weight
-
-unique_classes = np.unique(train_labels) # shape: (2, )
-
-# calculate the weights for each class automatically based on their frequency in the train data
-weights = compute_class_weight(class_weight = "balanced", classes = unique_classes, y = train_labels)
-
-weights_dict = dict(zip(unique_classes, weights))
-
-print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
-print(colored("Class Calculated Weights:", on_color = "on_green", attrs = ["bold", "italic"]))
-print(weights_dict)
-print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+# custom metrics
+custom_recall = Recall(thresholds = pred_threshold)
+custom_precision = Precision(thresholds = pred_threshold)
+custom_binacc = BinaryAccuracy(threshold = pred_threshold)
 
 # lstm compiling, training, evaluation and predictions...
 
-lstm_model.compile(optimizer = "adam", loss = "binary_crossentropy", metrics = ["binary_accuracy", "precision", "recall"])
+# focal loss suppresses the contribution of "easy examples"(the model outputs a high probability) to the total loss, 
+# forcing the model to focus on "hard" examples(the model is not sure about the sample's class)
+
+lstm_model.compile(optimizer = "adam", loss = BinaryFocalCrossentropy(gamma = 2.5, alpha = 0.55, apply_class_balancing = True), \
+                  metrics = [custom_binacc, custom_precision, custom_recall])
 lstm_model.summary()
 
-training_stoper = EarlyStopping(monitor = "val_loss", patience = 10, restore_best_weights = True)
+training_stoper = EarlyStopping(monitor = "val_loss", patience = 15, restore_best_weights = True)
 opt_learning_rate_reducer = ReduceLROnPlateau(monitor = "val_loss", factor = 0.25, patience = 5, min_lr = 0.00001)
 
 # callback to save the model after each epoch of the training process only if it's better than the previous version of it
@@ -80,14 +76,19 @@ print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 
 lstm_history = lstm_model.fit(x = train_features, y = train_labels, batch_size = lstm_batch_size, epochs = 100, verbose = 2, \
                              callbacks = [training_stoper, opt_learning_rate_reducer, lstm_checkpoint], \
-                             validation_data = (val_features, val_labels), class_weight = weights_dict)
+                             validation_data = (val_features, val_labels))
+
+lstm_loss, _, _, _ = lstm_model.evaluate(x = test_features, y = test_labels, batch_size = lstm_batch_size)
+
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
+print(f"Model's loss during evaluation: {colored(f"{lstm_loss:.4f}", color = "green", attrs = ["bold", "italic"])}")
+print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 
 predictions_2D = lstm_model.predict(test_features, batch_size = lstm_batch_size) # predictions shape: (number of test windows, 1)
 
 predictions_1D = predictions_2D.flatten() # shape: (number of test windows, )
-predictions_1D = (predictions_1D >= 0.45).astype(int) # turn the probabilities to labels, threshold set to 0.45
+predictions_1D = (predictions_1D >= pred_threshold).astype(int) # turn the probabilities to labels, threshold set to 0.45
 
-print(colored(f"{"="*100}", color = "yellow", attrs = ["bold"]))
 print(colored("Classification Report: ", on_color = "on_green", attrs = ["bold", "italic"]) + "\n")
 print(classification_report(y_true = test_labels, y_pred = predictions_1D, target_names = ["Awake(0)", "Drowsy(1)"]))
 

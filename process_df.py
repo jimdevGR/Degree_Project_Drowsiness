@@ -4,7 +4,7 @@ from termcolor import colored
 
 # function to split dataset to train and test sets based on subjects
 def split_df(df, test_size_percentage, val_or_test):
-    df_spliter = GroupShuffleSplit(n_splits = 1000, test_size = test_size_percentage, random_state = 100) # create a GroupShuffleSplit object
+    df_spliter = GroupShuffleSplit(n_splits = 1000, test_size = test_size_percentage, random_state = 1) # create a GroupShuffleSplit object
     current_df_drowsiness_ratio = df["State"].mean()
     split_found = False # flag to check whether a split was found
     
