@@ -15,7 +15,7 @@ frames_df = pd.read_csv(r"C:\PROJECT_drowsiness\processed_videos\frames_data.csv
 
 # global variables
 save_model_path = r"C:\PROJECT_drowsiness\lstm_model.keras"
-lstm_batch_size = 128
+lstm_batch_size = 64
 windowSize = 20
 windowStride = 2
 pred_threshold = 0.45
