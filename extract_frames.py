@@ -3,7 +3,7 @@ import os
 from shutil import rmtree
 from termcolor import colored
 
-video_path = r"C:\PROJECT_drowsiness\raw_videos\sleepy\24-FemaleNoGlasses-Yawning_1.mp4"
+video_path = r"C:\PROJECT_drowsiness\raw_videos\sleepy\37-Subject_2.mp4"
 images_path = r"C:\PROJECT_drowsiness\frames"
 counter = 0
 

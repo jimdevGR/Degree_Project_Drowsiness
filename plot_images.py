@@ -4,12 +4,12 @@ from termcolor import colored
 import os
 
 dataset_videos = [
-                 r"C:\PROJECT_drowsiness\raw_videos\active\1-FemaleNoGlasses-Normal.avi",
-                 r"C:\PROJECT_drowsiness\raw_videos\active\2-FemaleNoGlasses-Normal.avi",
-                 r"C:\PROJECT_drowsiness\raw_videos\active\20-MaleGlasses-Normal.avi",
-                 r"C:\PROJECT_drowsiness\raw_videos\sleepy\uta_microsleep_7.mp4",
-                 r"C:\PROJECT_drowsiness\raw_videos\sleepy\front_microsleep.mp4",
-                 r"C:\PROJECT_drowsiness\raw_videos\active\40-MaleNoGlasses-Normal.avi"
+                 r"C:\PROJECT_drowsiness\raw_videos\active\1-Subject_2.avi",
+                 r"C:\PROJECT_drowsiness\raw_videos\active\2-Subject_2.avi",
+                 r"C:\PROJECT_drowsiness\raw_videos\active\18-Subject_1.avi",
+                 r"C:\PROJECT_drowsiness\raw_videos\sleepy\61-Subject_2.mp4",
+                 r"C:\PROJECT_drowsiness\raw_videos\sleepy\63-Subject_2.mp4",
+                 r"C:\PROJECT_drowsiness\raw_videos\active\16-Subject.avi"
                  ]
 
 video_frames = []
@@ -23,7 +23,7 @@ for video_path in dataset_videos:
         print(colored("Continuing to the next video...", color = "green", attrs = ["bold", "italic"]))
         continue # continue to the next video
 
-    bool_value, frame = video_object.read()
+    _, frame = video_object.read()
     rgb_frame = cv2.cvtColor(src = frame, code = cv2.COLOR_BGR2RGB)
     video_frames.append(rgb_frame)
 
