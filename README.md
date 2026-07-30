@@ -1,6 +1,8 @@
 # Degree_Project_Drowsiness
 ---THIS IS A DEGREE PROJECT A DROWSINESS DETECTION SYSTEM---
+
 The repository contains the following files:
+
 data_preprocessing.py: This python script takes the raw videos and uses opencv and the mediapipe model to tranform them into the frames_data.csv. Uses the math_funcs.py script too.
 
 math_funcs: This python script contains two functions, one for calculating the EAR from the landmarks mediapipe gave for the frame and one for calculating the MAR.
