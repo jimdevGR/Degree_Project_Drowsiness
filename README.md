@@ -15,6 +15,6 @@ plot_images.py: This python script just takes some selected videos from the data
 
 helper_funcs.py: This python script contains three functions that are used from the train_model.py. One splits the dataset to train, test and validation sets, one tranforms the data of the three sets to "windows" and one who applies smoothing onto the predictions the model gives to correct mistakes.
 
-train_model.py This python script prepares the data for the model using functions inside the helper_funcs.py module, defines the model's architecture, trains it, evaluates it's perfomance, takes some predictions from it and makes a heatmap for visualizing the predictions.
+train_model.py: This python script prepares the data for the model using functions inside the helper_funcs.py module, defines the model's architecture, trains it, evaluates it's perfomance, takes some predictions from it and makes a heatmap for visualizing the predictions.
 
 training_results: A folder containing pictures showing the model's perfomance.
