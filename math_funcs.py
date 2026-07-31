@@ -10,7 +10,7 @@ function to calculate the eye-aspect-ratio,
 we multiply the coordinates by the width or height of the input image
 because they are normalized values by mediapipe between 0-1
 '''
-def calculate_ear(mediapipe_landmarks, eye_indices, image_width, image_height, side):
+def calculate_ear(mediapipe_landmarks, eye_indices, image_width, image_height, side) -> float:
     eye_points = {}
     for index in eye_indices:
         eye_x = mediapipe_landmarks[index].x * image_width
@@ -26,7 +26,7 @@ def calculate_ear(mediapipe_landmarks, eye_indices, image_width, image_height, s
     return ear
 
 # function to calculate the mouth-aspect-ratio
-def calculate_mar(mediapipe_landmarks, mouth_indices, image_width, image_height):
+def calculate_mar(mediapipe_landmarks, mouth_indices, image_width, image_height) -> float:
     mouth_points = {}
     for index in mouth_indices:
         mouth_x = mediapipe_landmarks[index].x * image_width
