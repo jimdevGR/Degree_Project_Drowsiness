@@ -59,14 +59,16 @@ def main():
                 mar = calculate_mar(landmarks, mouth_indices, width, height)
                 draw_landmarks(frame, landmarks, left_eye_indices + right_eye_indices, height, width, (255, 0, 0)) # draw eye points with blue
                 draw_landmarks(frame, landmarks, mouth_indices, height, width, (0, 0, 255)) # draw mouth points with red
-                cv2.putText(frame, f"EAR: {avg_ear:.3f}", org = (550, 80), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (255, 0, 0), thickness = 2)
-                cv2.putText(frame, f"MAR: {mar:.3f}", org = (550, 125), fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, color = (0, 0, 255), thickness = 2)
+                cv2.putText(img = frame, text = f"EAR: {avg_ear:.3f}", org = (550, 80), fontFace = cv2.FONT_ITALIC, \
+                            fontScale = 1, color = (255, 0, 0), thickness = 2, lineType = cv2.LINE_AA)
+                cv2.putText(img = frame, text = f"MAR: {mar:.3f}", org = (550, 125), fontFace = cv2.FONT_ITALIC, \
+                            fontScale = 1, color = (0, 0, 255), thickness = 2, lineType = cv2.LINE_AA)
                 cv2.imshow(f"{os.path.basename(frame_path)}", frame) # show image with landmarks
                 name = fr"{folder_to_save}\lm_{os.path.basename(frame_path)}"
                 cv2.imwrite(name, frame)
                 print(colored(f"{os.path.basename(frame_path)} --> EAR: {avg_ear:.3f} | MAR: {mar:.3f}", color = "green", attrs = ["bold", "italic"]))
             
-                cv2.waitKey(0) # wait until any key is pressed to close the window
+                cv2.waitKey(0) # wait until any key is pressed to close the windows
 
 if __name__ == "__main__":
     main()
