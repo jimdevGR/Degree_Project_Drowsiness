@@ -3,6 +3,10 @@ import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
 from termcolor import colored
 
+# global static variables for min-max scaling
+MIN_EAR_RANGE = 0.20 # based on the 10th percentile of the ear ranges of the dataset videos
+MIN_MAR_RANGE = 0.25 # based on the median range of the mar ranges
+
 # function to split dataset to train and test sets based on subjects
 def split_df(df, test_size_percentage, val_or_test):
     df_spliter = GroupShuffleSplit(n_splits = 1000, test_size = test_size_percentage, random_state = 1) # create a GroupShuffleSplit object
@@ -51,12 +55,10 @@ def split_df_toWindows(df, window_size, stride):
         # get min-max values
         group_ear_min, group_ear_max = group_ear_vals.min(), group_ear_vals.max()
         group_mar_min, group_mar_max = group_mar_vals.min(), group_mar_vals.max()
-        
-        # avoid division by zero
-        if (group_ear_max - group_ear_min) != 0: group_ear_denom = group_ear_max - group_ear_min
-        else: group_ear_denom =  1
-        if (group_mar_max - group_mar_min) != 0: group_mar_denom = group_mar_max - group_mar_min
-        else: group_mar_denom = 1
+
+        # apply safe bounds, so the denominator doesn't get lower than the min bound
+        group_ear_denom = max(group_ear_max - group_ear_min, MIN_EAR_RANGE)
+        group_mar_denom = max(group_mar_max - group_mar_min, MIN_MAR_RANGE)
 
         normalized_group_ear_vals = (group_ear_vals - group_ear_min) / group_ear_denom
         normalized_group_mar_vals = (group_mar_vals - group_mar_min) / group_mar_denom

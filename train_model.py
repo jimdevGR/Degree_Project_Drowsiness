@@ -151,7 +151,7 @@ conf_group_labels = [f"{s1}\n{s2}\n{s3}" for s1, s2, s3 in zip(conf_group_names,
 conf_group_labels_2D = np.array(conf_group_labels).reshape(2,2)
 
 # create figure and plot the confusion matrix
-plt.figure(figsize = (8,6), edgecolor = "black", facecolor = "whitesmoke", layout = "tight")
+plt.figure(num = "Classification Figure", figsize = (8,6), edgecolor = "black", linewidth = 2, facecolor = "whitesmoke", layout = "tight")
 sns.heatmap(data = conf_matrix, cmap = "YlGnBu", annot = conf_group_labels_2D, fmt = "", cbar = False, square = True, \
             linecolor = "black", linewidths = 0.5, xticklabels = ["Awake(0)", "Drowsy(1)"], yticklabels = ["Awake(0)", "Drowsy(1)"], \
             annot_kws = {"size":"medium", "style":"italic", "weight":"bold"})
