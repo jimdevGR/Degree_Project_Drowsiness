@@ -56,7 +56,7 @@ def split_df_toWindows(df, window_size, stride):
         group_ear_min, group_ear_max = group_ear_vals.min(), group_ear_vals.max()
         group_mar_min, group_mar_max = group_mar_vals.min(), group_mar_vals.max()
 
-        # apply safe bounds, so the denominator doesn't get lower than the min bound
+        # apply safety bounds, so the denominator doesn't get lower than the min bound
         group_ear_denom = max(group_ear_max - group_ear_min, MIN_EAR_RANGE)
         group_mar_denom = max(group_mar_max - group_mar_min, MIN_MAR_RANGE)
 
