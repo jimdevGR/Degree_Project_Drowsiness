@@ -17,6 +17,6 @@ helper_funcs.py: This python script contains three functions that are used from 
 
 train_model.py: This python script prepares the data for the model using functions inside the helper_funcs.py module, defines the model's architecture, trains it, evaluates it's perfomance, takes some predictions from it and makes a heatmap for visualizing the predictions.
 
-df_statistics.py: This python script finds the median and 10th percentile of the ear/mar ranges of the videos in the dataset. This statistics are used for the min-max scaling of the features.
+df_statistics.py: This python script finds the median and 10th percentile of the ear/mar ranges of the videos in the dataset. These statistics are used for the min-max scaling of the features.
 
 training_results: A folder containing pictures showing the model's perfomance.
