@@ -14,7 +14,7 @@ def split_df(df, test_size_percentage, val_or_test):
     split_found = False # flag to check whether a split was found
     
     # generate random dataset splits based on the 'Subject' column until we find the first one that satisfies our criteria
-    # basically we use a monte carlo algorithmic approach
+    # basically we use a random search approach
     for train_idxs, test_idxs in df_spliter.split(df, groups = df["Subject"]):
         test_df = df.iloc[test_idxs].reset_index(drop = True) # get the rows for the test dataset
         actual_test_size = len(test_df) / len(df) # get the actual test dataset size based on the number of rows
@@ -76,7 +76,7 @@ def split_df_toWindows(df, window_size, stride):
         final_window_end_bound = (line - stride) + window_size
         # if the final window didn't allign exactly at the end of the video
         if final_window_end_bound < group_number_of_frames:
-            # we create a final window that starts exactly window_size frames from the end of the video, Last-Window-Allignemtn technique
+            # we create a final window that starts exactly window_size frames from the end of the video, Last-Window-Allignment technique
             start_line = group_number_of_frames - window_size 
             X.append(normalized_group_features[start_line : group_number_of_frames])
             y.append(group_labels[group_number_of_frames - 1])

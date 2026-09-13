@@ -29,7 +29,7 @@ frames_df = pd.read_csv(r"C:\PROJECT_drowsiness\processed_videos\frames_data.csv
 save_model_path = r"C:\PROJECT_drowsiness\model.keras"
 model_batch_size = 128
 windowSize = 30
-windowStride = 3
+windowStride = 2
 df_drowsiness_ratio = frames_df["State"].mean() # calculate the percentage of the frames with 'State' 1 in the dataset
 
 print("Dataset drowsiness ratio: " + colored(f"{df_drowsiness_ratio:.2%}", color = "yellow", attrs = ["bold", "italic"]))
@@ -117,14 +117,14 @@ for size in [1, 3, 5, 7, 9, 11, 13]: # size 1 equals no smoothing
             "rolling_size" : size,
             "f1_score" : f1score
         })
-    grid_search_results_df = pd.DataFrame(data = grid_search_results)
-    best_f1_score = grid_search_results_df["f1_score"].max() # get the highest f1 score
-    top_combinations = grid_search_results_df[grid_search_results_df["f1_score"] >= best_f1_score - 0.005]
-    min_rolling_size = top_combinations["rolling_size"].min() # get the lowest window size from the best combinations
-    plateau_best_thresholds = top_combinations[top_combinations["rolling_size"] == min_rolling_size]["threshold"]
-    # we set the mean of all the best thresholds found, as the final best threshold, to make the model more robust
-    # and durable to small changes in the predictions during lets say a live testing
-    best_threshold = plateau_best_thresholds.mean()
+grid_search_results_df = pd.DataFrame(data = grid_search_results)
+best_f1_score = grid_search_results_df["f1_score"].max() # get the highest f1 score
+top_combinations = grid_search_results_df[grid_search_results_df["f1_score"] >= best_f1_score - 0.005]
+min_rolling_size = top_combinations["rolling_size"].min() # get the lowest window size from the best combinations
+plateau_best_thresholds = top_combinations[top_combinations["rolling_size"] == min_rolling_size]["threshold"]
+# we set the mean of all the best thresholds found, as the final best threshold, to make the model more robust
+# and durable to small changes in the predictions during lets say a live testing
+best_threshold = plateau_best_thresholds.mean()
 
 print(colored("="*100, color = "yellow", attrs = ["bold"]))
 print(f"Best threshold found: {colored(f"{best_threshold:.4f}", color = "green", attrs = ["bold", "italic"])} | Best rolling window size found: {\

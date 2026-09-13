@@ -65,7 +65,7 @@ def main():
                     if not bool_value:
                         break # exit current video
                     
-                    if frame_counter % 3 == 0: # process every 1 in 3 frames, skip 2, for less cpu usage
+                    if frame_counter % 5 == 0: # process every 1 in 5 frames(6fps), skip 4, for less cpu usage
                         frame_timestamp_ms = int((frame_counter / fps) * 1000) # mediapipe needs the timestamp in ms and in type int
                         height, width = frame.shape[:2]
                         rgb_frame = cv2.cvtColor(src = frame, code = cv2.COLOR_BGR2RGB) # opencv reads the images in the bgr color space
